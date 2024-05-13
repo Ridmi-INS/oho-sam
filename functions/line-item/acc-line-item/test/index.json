@@ -1,0 +1,58 @@
+{
+    "constituent": {
+      "id": "00ff64db-7aaf-474a-9b7c-654656ebaf6b",
+      "created_at": "2022-11-02T05:59:20.887Z",
+      "updated_at": "2022-11-02T05:59:20.887Z",
+      "external_emp_id": "aa777b18-feff-4b8f-9ac7-cbab9c7a9299",
+      "full_name": "test constituent",
+      "client_id": "test-client",
+      "mobile_number": null,
+      "email": "abc@bbc.com",
+      "external_id": "external-id-1",
+      "active": true,
+      "hash": "facd3ba3df2251cd4621d694c97e420d26e28c315a4102c7ccc6795655723b7e",
+      "birth_date": "2000-01-01"
+    },
+    "index": 2,
+    "constituent_hash": {
+      "id": "00ff64db-7aaf-474a-9b7c-654656ebaf6b",
+      "batch_id": "16037b4e-e75f-49e1-a0a6-a238d857390d",
+      "job_id": "10e1790d-c813-4a8b-9947-cc8276b71496",
+      "next_action": "post",
+      "hash": "facd3ba3df2251cd4621d694c97e420d26e28c315a4102c7ccc6795655723b7e",
+      "updated_at": "2022-11-04T04:47:04.371Z"
+    },
+    "client": {
+      "id": "humanforce-demo",
+      "baseUrl": "https://apidemo.humanforce.com",
+      "auth": {
+        "type": "Basic",
+        "api_key_param": "api-key",
+        "api_secret_param": "api-secret"
+      }
+    },
+    "accreditations": [
+        {
+          "external_emp_id": "Ba777b18-feff-4b8f-9ac7-cbab9c7a9299",
+          "qualification_guid": "7d9668e7-0c35-460d-bb78-5011cf68c484",
+          "type_name": "Drivers Licence",
+          "mapped_type": "OHO Drivers Licence",
+          "date_expire": "2020-11-20T00:00:00",
+          "certificate_number": "sdrfaaz",
+          "full_name": "full name",
+          "external_id": "externalid",
+          "client_id": "humanforce-demo"
+        },
+        {
+          "external_emp_id": "Ba777b18-feff-4b8f-9ac7-cbab9c7a9299",
+          "qualification_guid": "7d9668e7-0c35-460d-bb78-5011cf68c485",
+          "type_name": "Drivers Licence",
+          "mapped_type": null,
+          "date_expire": "2020-11-20T00:00:00",
+          "certificate_number": "sdrfab",
+          "full_name": "full name",
+          "external_id": "externalid",
+          "client_id": "humanforce-demo"
+        }
+      ] 
+  }

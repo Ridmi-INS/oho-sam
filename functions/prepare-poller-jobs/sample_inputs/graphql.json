@@ -1,0 +1,43 @@
+{
+    "stage": "staging",
+    "client_id": "242",
+    "functions": {
+      "fetch_payload": "arn:aws:lambda:us-east-1:637840254828:function:oho-staging-connector-242-polle-FetchPayloadLambda-n8XpjSo6vGzs"
+    },
+    "meta": {
+      "available": false,
+      "records_size": "-1",
+      "max_page_size": "500",
+      "request_type": "get",
+      "base_url": "",
+      "path": "",
+      "record_size_json_path": "",
+      "query": {},
+      "body": {}
+    },
+    "healthcheck": {
+      "available": true,
+      "auth_type": "Basic",
+      "fetch_type": "graphql",
+      "request_type": "post",
+      "base_url": "https://weareoho.ucareapp.com",
+      "path": "/graphql",
+      "query": {},
+      "body": {
+        "is_json": false,
+        "content": "query { userProfile { id }}"
+        }
+    },
+    "data": {
+      "auth_type": "Basic",
+      "fetch_type": "graphql",
+      "request_type": "post",
+      "base_url": "https://weareoho.ucareapp.com",
+      "path": "/graphql",
+      "data_json_path": "null",
+      "max_page_size": "500",
+      "allow_last_edit": "true",
+      "query": {},
+      "body": {}
+    }
+  }

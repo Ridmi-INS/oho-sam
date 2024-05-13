@@ -1,0 +1,21 @@
+{
+  "name": "prepare-poller-jobs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint --fix --ext .js,.jsx ."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1500.0",
+    "axios": "^1.1.2",
+    "lodash": "^4.17.21",
+    "pino": "^8.11.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.54.0"
+  }
+}

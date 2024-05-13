@@ -1,0 +1,160 @@
+Comment: Oho-Connector Poller Step Function
+StartAt: PreparePollerJobs
+States:
+  PreparePollerJobs:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    OutputPath: $.Payload.body.tasks
+    Parameters:
+      Payload.$: $
+      FunctionName: ${PreparePollerJobsFunction}
+    Next: ReportBatchProgress
+    Catch:
+      - ErrorEquals:
+          - States.ALL
+        Next: onBatchFailed
+    Retry:
+      - ErrorEquals:
+          - States.ALL
+        BackoffRate: 2
+        IntervalSeconds: 2
+        MaxAttempts: 2
+  ReportBatchProgress:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      Payload.$: $
+      FunctionName: ${ReportBatchProgressFunction}
+    Next: Map
+    Catch:
+      - ErrorEquals:
+          - States.ALL
+        Next: onBatchFailed
+    Retry:
+      - ErrorEquals:
+          - States.ALL
+        BackoffRate: 2
+        IntervalSeconds: 2
+        MaxAttempts: 2
+    OutputPath: $.Payload.body
+  onBatchFailed:
+    Type: Fail
+  Map:
+    Type: Map
+    Iterator:
+      StartAt: ChooseNextAction
+      States:
+        ChooseNextAction:
+          Type: Choice
+          Choices:
+            - Variable: $.state
+              StringEquals: onBatchCreated
+              Next: FetchPayload
+            - Variable: $.state
+              StringEquals: onPayloadSaved
+              Next: SendToEventBus
+            - Variable: $.state
+              StringEquals: onSentToEventBus
+              Next: AreAllDataFetched
+            - Variable: $.state
+              StringEquals: onNoPayload
+              Next: AreAllDataFetched
+            - Variable: $.state
+              StringEquals: Failed
+              Next: Fail
+        FetchPayload:
+          Type: Task
+          Resource: arn:aws:states:::lambda:invoke
+          OutputPath: $.Payload.body
+          Parameters:
+            Payload.$: $
+            FunctionName.$: $.functions.fetch_payload
+          Catch:
+            - ErrorEquals:
+                - States.ALL
+              Next: Fail
+          Retry:
+            - ErrorEquals:
+                - States.ALL
+              BackoffRate: 2
+              IntervalSeconds: 2
+              MaxAttempts: 2
+          TimeoutSeconds: 60
+          HeartbeatSeconds: 60
+          Next: ReportJobProgress
+        SendToEventBus:
+          Type: Task
+          Next: onSentToEventBus
+          Parameters:
+            Entries:
+              - Detail.$: $
+                DetailType.$ : $.client_id
+                EventBusName: ${JobEventBus}
+                Source.$: $.client_id
+          Resource: arn:aws:states:::events:putEvents
+          Catch:
+            - ErrorEquals:
+                - States.ALL
+              Next: Fail
+          ResultSelector:
+            EventId.$: $.Entries[0].EventId
+          ResultPath: $.EventId
+        onSentToEventBus:
+          Type: Pass
+          Next: ReportJobProgress
+          Result: onSentToEventBus
+          ResultPath: $.state
+        AreAllDataFetched:
+          Type: Choice
+          Choices:
+          - Variable: $.batch.continue
+            BooleanEquals: true
+            Next: FetchPayload
+          - Variable: $.batch.continue
+            BooleanEquals: false
+            Next: End
+        End:
+          Type: Succeed
+        ReportJobProgress:
+          Type: Task
+          Resource: arn:aws:states:::lambda:invoke
+          Parameters:
+            Payload.$: $
+            FunctionName: ${ReportJobProgressFunction}
+          Next: ChooseNextAction
+          Catch:
+            - ErrorEquals:
+                - States.ALL
+              Next: Fail
+          Retry:
+            - ErrorEquals:
+                - States.ALL
+              BackoffRate: 2
+              IntervalSeconds: 2
+              MaxAttempts: 2
+          OutputPath: $.Payload.body
+        Fail:
+          Type: Fail
+    ItemsPath: $
+    MaxConcurrency: 10
+    Next: ReportBatchCompleteProgress
+  ReportBatchCompleteProgress:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      Payload.$: $
+      FunctionName: ${ReportBatchProgressFunction}
+    End: true
+    Catch:
+      - ErrorEquals:
+          - States.ALL
+        Next: onBatchFailed
+    Retry:
+      - ErrorEquals:
+          - States.ALL
+        BackoffRate: 2
+        IntervalSeconds: 2
+        MaxAttempts: 2
+    OutputPath: $.Payload
+TimeoutSeconds: 600
+

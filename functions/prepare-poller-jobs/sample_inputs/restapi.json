@@ -1,0 +1,45 @@
+{
+    "stage": "${env}",
+    "client_id": "${client_id}",
+    "functions": {
+        "fetch_payload": ""
+    },
+    "meta": {
+        "available": false,
+        "url": "",
+        "records_size": "-1",
+        "request_type": "post",
+        "base_url": "${base_url}",
+        "path": "${path}",
+        "record_size_json_path": "",
+        "query": {},
+        "body": {}
+    },
+    "healthcheck": {
+        "auth_type": "Basic",
+        "fetch_type": "rest",
+        "request_type": "post",
+        "base_url": "${base_url}",
+        "path": "${path}",
+        "query": {}
+    },
+    "data": {
+        "auth_type": "Basic",
+        "fetch_type": "rest",
+        "request_type": "post",
+        "base_url": "${base_url}",
+        "path": "${path}",
+        "page_query": "page",
+        "page_size_query": "pageSize",
+        "max_page_size": "${max_page_size}",
+        "allow_last_edit": "${allow_last_edit}",
+        "query": {
+          "lastEdit": null,
+          "activeOnly": true
+        },
+        "body": {
+            "is_json": false,
+            "content": "query { userProfile { id }}"
+        }
+    }
+}

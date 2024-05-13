@@ -1,0 +1,343 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Amazon Aurora PostgreSQL Serverless v2 with RDS Proxy for Connector
+
+Parameters:
+  Env:
+    Type: String
+
+# Mapping holding default network/database settings
+Mappings:
+  NetworkSettings:
+    global:
+      vpcCidr: 172.31.0.0/16
+      subPrv1Cidr: 172.31.0.0/24
+      subPrv2Cidr: 172.31.1.0/24
+      subPrv3Cidr: 172.31.2.0/24
+  ClusterSettings:
+    global:
+      dbName: postgres
+      dbVersion: "13.7"
+      dbEngine: aurora-postgresql
+      dbFamily: aurora-postgresql13
+      port: "5432"
+      nodeType: db.serverless
+
+Resources:
+  # VPC for creating database and proxy
+  vpc:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      CidrBlock: !FindInMap [NetworkSettings, global, vpcCidr]
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-vpc"
+
+  # Private subnet 1
+  sub1Private:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref vpc
+      CidrBlock: !FindInMap [NetworkSettings, global, subPrv1Cidr]
+      AvailabilityZone: !Join ["", [!Ref "AWS::Region", a]]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-prv-sub-1"
+
+  # Private subnet 2
+  sub2Private:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref vpc
+      CidrBlock: !FindInMap [NetworkSettings, global, subPrv2Cidr]
+      AvailabilityZone: !Join ["", [!Ref "AWS::Region", b]]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-prv-sub-2"
+
+  # Private subnet 3
+  sub3Private:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref vpc
+      CidrBlock: !FindInMap [NetworkSettings, global, subPrv3Cidr]
+      AvailabilityZone: !Join ["", [!Ref "AWS::Region", c]]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-prv-sub-3"
+
+  # Security group to be used by lambda function which is allowed to connect to database via Proxy
+  lambdaSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Groups for the AWS Lambda for accessing RDS/Proxy
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: tcp
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: tcp
+      VpcId: !Ref vpc
+
+  # database cluster/proxy security group
+  dbClusterSecGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      VpcId: !Ref vpc
+      GroupDescription: "security group (firewall)"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-database-sg"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !FindInMap [ClusterSettings, global, port]
+          ToPort: !FindInMap [ClusterSettings, global, port]
+          SourceSecurityGroupId: !GetAtt lambdaSg.GroupId
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          SourceSecurityGroupId: !GetAtt lambdaSg.GroupId
+
+  # Ingress rule for database security group
+  ruleDbClusterSecGroupIngressSelf:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    Properties:
+      GroupId: !Ref dbClusterSecGroup
+      IpProtocol: -1
+      Description: "Allows all inbound access from sources with the same security group"
+      SourceSecurityGroupId: !Ref dbClusterSecGroup
+
+  # Database cluster username/password stored in AWS Secret Manager
+  secretClusterMasterUser:
+    Type: "AWS::SecretsManager::Secret"
+    Properties:
+      Description: !Sub "Master user credentials for DB cluster '${AWS::StackName}-mysql-cluster'"
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "masteruser"}'
+        GenerateStringKey: "password"
+        PasswordLength: 10
+        ExcludeCharacters: '"@/\$`&:{}()[]'
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-cluster-secret"
+
+  # IAM Role to be used for enabling enhanced monitoring for RDS Aurora cluster
+  roleEnhancedMonitoring:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Description: "Allows your Aurora DB cluster to deliver Enhanced Monitoring metrics."
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - "sts:AssumeRole"
+            Principal:
+              Service:
+                - "monitoring.rds.amazonaws.com"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-monitor-${AWS::Region}"
+
+  # Custom parameter group for RDS Aurora
+  pgNodeParams:
+    Type: "AWS::RDS::DBParameterGroup"
+    Properties:
+      Description: !Sub "${AWS::StackName}-mysql-node-params"
+      Family: !FindInMap [ClusterSettings, global, dbFamily]
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-mysql-node-params"
+
+  # Database subnets
+  dbSubnets:
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties:
+      DBSubnetGroupDescription: "subnets allowed for deploying DB instances"
+      SubnetIds: [!Ref sub1Private, !Ref sub2Private, !Ref sub3Private]
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-db-subnet-group"
+
+  # Rds Aurora Cluster
+  dbCluster:
+    Type: "AWS::RDS::DBCluster"
+    Properties:
+      DBSubnetGroupName: !Ref dbSubnets
+      BackupRetentionPeriod: 1
+      Engine: !FindInMap [ClusterSettings, global, dbEngine]
+      EngineVersion: !FindInMap [ClusterSettings, global, dbVersion]
+      MasterUsername:
+        !Join [
+          "",
+          [
+            "{{resolve:secretsmanager:",
+            !Ref secretClusterMasterUser,
+            ":SecretString:username}}",
+          ],
+        ]
+      MasterUserPassword:
+        !Join [
+          "",
+          [
+            "{{resolve:secretsmanager:",
+            !Ref secretClusterMasterUser,
+            ":SecretString:password}}",
+          ],
+        ]
+      DatabaseName: !FindInMap [ClusterSettings, global, dbName]
+      StorageEncrypted: true
+      VpcSecurityGroupIds: [!Ref dbClusterSecGroup]
+      EnableIAMDatabaseAuthentication: true
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: "0.5"
+        MaxCapacity: "2"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-mysql-cluster"
+
+  # Primary DB instance for RDS Cluster
+  dbNode2:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      DBClusterIdentifier: !Ref dbCluster
+      CopyTagsToSnapshot: true
+      DBParameterGroupName: !Ref pgNodeParams
+      DBInstanceClass: !FindInMap [ClusterSettings, global, nodeType]
+      Engine: !FindInMap [ClusterSettings, global, dbEngine]
+      MonitoringInterval: 1
+      MonitoringRoleArn: !GetAtt roleEnhancedMonitoring.Arn
+      PubliclyAccessible: false
+      EnablePerformanceInsights: false
+      StorageEncrypted: true
+      PerformanceInsightsRetentionPeriod: 7
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-postgres-node-2"
+
+  # Route Table for VPC Endpoint
+  VPCRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpc
+
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref sub1Private
+      RouteTableId: !Ref VPCRouteTable
+
+  SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref sub2Private
+      RouteTableId: !Ref VPCRouteTable
+
+  SubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref sub3Private
+      RouteTableId: !Ref VPCRouteTable
+
+  # VPC endpoint for S3 access
+  VPCGatewayEndpointForS3:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action:
+              - "s3:*"
+            Resource:
+              - "*"
+      RouteTableIds:
+        - !GetAtt VPCRouteTable.RouteTableId
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcId: !Ref vpc
+
+  # VPC endpoint for queue access / interface
+  VPCGatewayEndpointForSQS:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.sqs"
+      VpcId: !Ref vpc
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref sub1Private
+        - !Ref sub2Private
+        - !Ref sub3Private
+      SecurityGroupIds:
+        - !GetAtt lambdaSg.GroupId
+      PrivateDnsEnabled: true
+
+Outputs:
+  DBVPCID:
+    Description: VPC Id
+    Value: !Ref vpc
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "vpcid"]]
+  DBSubnet1:
+    Description: Subnets for the Aurora database instances
+    Value: !Ref sub1Private
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "subnet1"]]
+  DBSubnet2:
+    Description: Subnets for the Aurora database instances
+    Value: !Ref sub2Private
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "subnet2"]]
+  DBSubnet3:
+    Description: Subnets for the Aurora database instances
+    Value: !Ref sub3Private
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "subnet3"]]
+  DBSecretArn:
+    Description: Database Credentials Secret Manager ARN
+    Value: !Ref secretClusterMasterUser
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "secretarn"]]
+  DBLambdaSecurityGroupID:
+    Description: Security group ID to use on lambda
+    Value: !GetAtt lambdaSg.GroupId
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "lambdasecuritygroup"]]
+  DBName:
+    Description: DB Name
+    Value: !FindInMap [ClusterSettings, global, dbName]
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "name"]]
+  VPCRouteTableID:
+    Description: VPC Route Table ID
+    Value: !GetAtt VPCRouteTable.RouteTableId
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "vpcroutetableid"]]
+  DBRDSClusterEndpoint:
+    Description: DB RDS Primary Endpoint
+    Value: !GetAtt dbCluster.Endpoint.Address
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "rdscluserendpoint"]]
+  DBRDSPort:
+    Description: DB RDS Port
+    Value: !GetAtt dbCluster.Endpoint.Port
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "rdsport"]]
+  DBRDSClusterResoureId:
+    Description: DB RDS Cluster Resource ID
+    Value: !GetAtt dbCluster.DBClusterResourceId
+    Export:
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "rdsclusterresourceid"]]
+

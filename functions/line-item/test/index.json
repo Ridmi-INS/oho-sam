@@ -1,0 +1,28 @@
+{
+  "Records": [
+    {
+      "messageId": "2467b197-54c0-4e3e-a669-55e6cb286d6b",
+      "receiptHandle": "AQEBd8uoEPABrp7wD7C4Xn5TRQ+pQE8jUqRlp7leQdyFycZz6JRx0dSbLpjP8CFF8o0M9GmVqmdopnvNJH8A79+nqyUoc315QT",
+      "body": {
+        "external_emp_id": "deff7722-ae41-46b9-b766-f4c49ec114d1",
+        "full_name": "Shanti Laranjo",
+        "client_id": "OhoConnectorGroup",
+        "mobile_number": null,
+        "email": "ai2FLXS@hf.com",
+        "external_id": "KeNZH08",
+        "active": true,
+        "birth_date": "2000-12-14T05:05:34.663Z",
+        "termination_date": "2023-03-18T05:10:37",
+        "batch_id": "5ef0362f-bf8e-4294-b79c-254b34014bc0",
+        "job_id": "7cba8258-c7ac-4aec-8e11-32553a9bb20c",
+        "location": "string"
+      },
+      "attributes": [],
+      "messageAttributes": {},
+      "md5OfBody": "e4b6f3d67245dee18c6d7b02ca64ef30",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-2: 637840254828:LineItemQueue.fifo",
+      "awsRegion": "us-east-2"
+    }
+  ]
+}

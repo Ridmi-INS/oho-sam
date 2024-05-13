@@ -1,0 +1,42 @@
+{
+    "stage": "staging",
+    "client_id": "242",
+    "functions": {
+        "fetch_payload": ""
+    },
+    "meta": {
+        "available": false,
+        "url": "",
+        "records_size": "-1",
+        "request_type": "post",
+        "base_url": "${base_url}",
+        "path": "${path}",
+        "record_size_json_path": "",
+        "query": {},
+        "body": {}
+    },
+    "healthcheck": {
+        "auth_type": "Basic",
+        "fetch_type": "rest",
+        "request_type": "post",
+        "base_url": "https://61ll4ey573.execute-api.us-east-1.amazonaws.com",
+        "path": "dev/api/1.0/employees",
+        "query": {}
+    },
+    "data": {
+        "auth_type": "Basic",
+        "fetch_type": "rest",
+        "request_type": "post",
+        "base_url": "https://61ll4ey573.execute-api.us-east-1.amazonaws.com",
+        "path": "dev/api/1.0/employees",
+        "page_query": "page",
+        "page_size_query": "pageSize",
+        "max_page_size": "10",
+        "allow_last_edit": "false",
+        "query": {
+          "lastEdit": null,
+          "activeOnly": true
+        },
+        "body": {}
+    }
+}
