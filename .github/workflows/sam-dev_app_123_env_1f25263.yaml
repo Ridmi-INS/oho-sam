@@ -5,7 +5,7 @@ name: sam-dev_app_123_env_1f25263 Pipeline (Skyu Generated)
       - main
   workflow_dispatch: {}
   repository_dispatch:
-    types: pipeline_5e4e9b08-0f85-44b5-a517-087e64dbe417
+    types: pipeline_f41d8e0b-82a8-4b5c-8ed7-6246e02df224
 env:
   ENCODED_PIPELINE_SECRET: ${{secrets.OHOSAM_SAMDEV_APP_123_ENV_1F25263}}
   COMMIT_ID: ${{github.event.client_payload.commitId || github.sha || github.run_id}}
@@ -158,8 +158,6 @@ jobs:
         run: >-
           ${{ env.SAM_DEPLOY_COMMAND }} -t ${{ env.YML_PATH }} ${{
           env.SAM_DEPLOY_ARGS }}
-      - name: Step 1
-        run: echo "STEP 1 RUNNING"
   _status-success:
     name: _status Success
     permissions: write-all
