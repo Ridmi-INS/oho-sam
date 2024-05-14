@@ -1,13 +1,13 @@
-name: sam-dev_app_e07cc2f_env_1f25263 Pipeline (Skyu Generated)
+name: sam-staging_app_e07cc2f_env_f48c503 Pipeline (Skyu Generated)
 'on':
   push:
     branches:
       - main
   workflow_dispatch: {}
   repository_dispatch:
-    types: pipeline_4ba63f92-4f20-405f-bd57-c746507a49d9
+    types: pipeline_2dfc18a3-cc7f-49ee-96e2-114d0cad6411
 env:
-  ENCODED_PIPELINE_SECRET: ${{secrets.OHOSAM_SAMDEV_APP_E07CC2F_ENV_1F25263}}
+  ENCODED_PIPELINE_SECRET: ${{secrets.OHOSAM_SAMSTAGING_APP_E07CC2F_ENV_F48C503}}
   COMMIT_ID: ${{github.event.client_payload.commitId || github.sha || github.run_id}}
   DEPLOY_STEP_SHOULD_DEPLOY: 'false'
 jobs:
