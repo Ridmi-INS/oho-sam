@@ -5,7 +5,7 @@ name: sam-dev_app_e07cc2f_env_1f25263 Pipeline (Skyu Generated)
       - main
   workflow_dispatch: {}
   repository_dispatch:
-    types: pipeline_9ba5776d-96bb-498d-b12c-e6a5e0b85f48
+    types: pipeline_193df57f-077e-4624-8433-14efffcc0b77
 env:
   ENCODED_PIPELINE_SECRET: ${{secrets.OHOSAM_SAMDEV_APP_E07CC2F_ENV_1F25263}}
   COMMIT_ID: ${{github.event.client_payload.commitId || github.sha || github.run_id}}
