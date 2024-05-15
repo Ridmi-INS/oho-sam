@@ -226,6 +226,18 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-postgres-node-2"
+        - Key: owner
+          Value: "prathap.senadeera@insighture.com"
+        - Key: scope
+          Value: "core"
+        - Key: organization
+          Value: "insighture"
+        - Key: env
+          Value: "prod"
+        - Key: project
+          Value: "skyu"
+        - Key: application
+          Value: "skyu-frontend"
 
   # Route Table for VPC Endpoint
   VPCRouteTable:
@@ -340,4 +352,3 @@ Outputs:
     Value: !GetAtt dbCluster.DBClusterResourceId
     Export:
       Name: !Join ["-", ["oho", !Ref Env, "connector", "rdsclusterresourceid"]]
-
