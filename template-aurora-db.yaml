@@ -351,4 +351,4 @@ Outputs:
     Description: DB RDS Cluster Resource ID
     Value: !GetAtt dbCluster.DBClusterResourceId
     Export:
-      Name: !Join ["-", ["oho", !Ref Env, "connector", "rdsclusterresourceid"]]
+      Name: !Join ["-", ["oho", !Ref Env, "connector", "rdsclusterresourceidd"]]
