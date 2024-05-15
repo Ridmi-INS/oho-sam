@@ -21,7 +21,7 @@ Mappings:
       dbEngine: aurora-postgresql
       dbFamily: aurora-postgresql13
       port: "5432"
-      nodeType: db.serverless
+      nodeType: db.t3.medium
 
 Resources:
   # VPC for creating database and proxy
