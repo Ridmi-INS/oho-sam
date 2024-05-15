@@ -130,18 +130,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-cluster-secret"
-        - Key: owner
-          Value: "prathap.senadeera@insighture.com"
-        - Key: scope
-          Value: "core"
-        - Key: organization
-          Value: "insighture"
-        - Key: env
-          Value: "prod"
-        - Key: project
-          Value: "skyu"
-        - Key: application
-          Value: "skyu-frontend"
 
   # IAM Role to be used for enabling enhanced monitoring for RDS Aurora cluster
   roleEnhancedMonitoring:
@@ -232,7 +220,7 @@ Resources:
       MonitoringInterval: 1
       MonitoringRoleArn: !GetAtt roleEnhancedMonitoring.Arn
       PubliclyAccessible: false
-      EnablePerformanceInsights: false
+      EnablePerformanceInsights: true
       StorageEncrypted: true
       PerformanceInsightsRetentionPeriod: 7
       Tags:
