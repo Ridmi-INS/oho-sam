@@ -155,7 +155,7 @@ Resources:
   MyS3Bucket:
     Type: "AWS::S3::Bucket"
     Properties:
-      BucketName: "my-unique-bucket-name"
+      BucketName: "my-unique-ridmi-bucket-name"
 
   # Custom parameter group for RDS Aurora
   pgNodeParams:
