@@ -174,9 +174,7 @@ jobs:
         run: sam validate -t ${{ env.YML_PATH }}
       - name: 'Run :: Build'
         run: |2-
-
-              ${{ env.APP_INSTALL_DEPS_PRE_COMMAND }}
-              ${{ env.APP_INSTALL_DEPS_COMMAND }} esbuild -g
+             
               ${{ env.SAM_BUILD_COMMAND }} -t ${{ env.YML_PATH }}
               if [ "$SAM_BUILD_ARGS" != "" ]; then
                 ${{ env.SAM_BUILD_ARGS }}
