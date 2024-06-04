@@ -151,7 +151,7 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-monitor-${AWS::Region}"
 
-   SamTestRole:
+  SamTestRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: Sam_Test_Role
@@ -164,22 +164,6 @@ Resources:
               AWS:
                 - "arn:aws:iam::272133924862:root"
             Action: sts:AssumeRole
-      Policies:
-        - PolicyName: Sam_Test_Policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: VisualEditor0
-                Effect: Allow
-                Action:
-                  - secretsmanager:GetRandomPassword
-                  - secretsmanager:ListSecrets
-                Resource: "*"
-              - Sid: VisualEditor1
-                Effect: Allow
-                Action: secretsmanager:*
-                Resource:
-                  - Fn::Sub: "arn:aws:secretsmanager:us-east-1:678356101643:secret:*"
 
   # Custom parameter group for RDS Aurora
   pgNodeParams:
