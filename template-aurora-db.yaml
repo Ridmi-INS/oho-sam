@@ -151,19 +151,11 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-monitor-${AWS::Region}"
 
-  SamTestRole:
-    Type: AWS::IAM::Role
+  # S3 Bucket
+  MyS3Bucket:
+    Type: "AWS::S3::Bucket"
     Properties:
-      RoleName: Sam_Test_Role
-      Description: Sam Test Role
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS:
-                - "arn:aws:iam::272133924862:root"
-            Action: sts:AssumeRole
+      BucketName: "my-unique-bucket-name"
 
   # Custom parameter group for RDS Aurora
   pgNodeParams:
